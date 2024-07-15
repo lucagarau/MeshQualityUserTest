@@ -8,17 +8,14 @@ using UnityEngine.Networking;
 public class Utilities : MonoBehaviour
 {
     private static float _lastDownloadTime;
-    private static List<UpdateMeshListServer.FileData> _fileDataArray;
     
     public static IEnumerator DownloadFile(string file, string url, string internalPath, Action<string> callback = null, string another = null)
     {
-        PrintManager.ShowMessage($"Download in corso di {file} da {url + file}");
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         stopwatch.Start();
 
         if (!File.Exists(internalPath + file))
         {
-            PrintManager.ShowMessage("File non trovato in locale, scarico il file dal server");
             var drcUrl = url + file;
 
             using (UnityWebRequest request = UnityWebRequest.Get(drcUrl))
@@ -34,16 +31,7 @@ public class Utilities : MonoBehaviour
                 SaveDownloadedFile(file, request.downloadHandler.data, internalPath);
                 stopwatch.Stop();
                 _lastDownloadTime = stopwatch.ElapsedMilliseconds;
-
-                //update download time
-                if (file.Contains(".drc"))
-                {
-                    PrintManager.setDownloadTime(_lastDownloadTime, "mesh");
-                }
-                else if (file.Contains(".png"))
-                {
-                    PrintManager.setDownloadTime(_lastDownloadTime, "texture");
-                }
+                
             }
         }
         
@@ -51,7 +39,6 @@ public class Utilities : MonoBehaviour
         {
             if (!File.Exists(internalPath + another))
             {
-                PrintManager.ShowMessage("File non trovato in locale, scarico il file dal server");
                 var drcUrl = url + another;
 
                 using (UnityWebRequest request = UnityWebRequest.Get(drcUrl))
@@ -81,7 +68,6 @@ public class Utilities : MonoBehaviour
     private static void HandleDownloadError(UnityWebRequest request)
     {
         Debug.LogError("Errore durante il download del file: " + request.error);
-        PrintManager.ShowMessage("Errore durante il download del file: " + request.error);
     }
 
     // Metodo per salvare il file scaricato
@@ -94,20 +80,9 @@ public class Utilities : MonoBehaviour
             Directory.CreateDirectory(folder);
         File.WriteAllBytes(filePath, data);
         Debug.Log(filePath);
-        PrintManager.ShowMessage("Mesh scaricata correttamente: " + filePath);
     }
     
     
-    
-    public static List<UpdateMeshListServer.FileData> getFileDataArray()
-    {
-        return _fileDataArray;
-    }
-    
-    public static void setFileDataArray(List<UpdateMeshListServer.FileData> fileDataArray)
-    {
-        _fileDataArray = fileDataArray;
-    }
     
     public static Material LoadMTL(string path)
     {

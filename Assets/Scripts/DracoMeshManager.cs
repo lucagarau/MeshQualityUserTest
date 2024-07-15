@@ -147,14 +147,12 @@ public class DracoMeshManager : MonoBehaviour
             }
             stopwatch.Stop();
             DecompressionTime = stopwatch.ElapsedMilliseconds;
-            PrintManager.setDecompressionTime(DecompressionTime,"mesh");
             VtxCount = mesh.vertexCount;
             FacesCount = mesh.triangles.Length;
             
             //todo prova per uv
             RotateUV();
 
-            PrintManager.UpdateMeshInfo(this);
             Debug.Log("Decompressione completata con successo");
         }
         else
@@ -229,7 +227,6 @@ public class DracoMeshManager : MonoBehaviour
         if (Instances.Contains(instance))
             Instances.Remove(instance);
         Instances.Add(instance);
-        PrintManager.UpdateMeshInfo(instance);
     }
 
     public static List<DracoMeshManager> GetInstances()
@@ -316,7 +313,6 @@ public class DracoMeshManager : MonoBehaviour
         renderer.material.mainTexture = texture;
         stopWatch.Stop();
         Debug.Log("Decompressione completata con successo in " + stopWatch.ElapsedMilliseconds + "ms");
-        PrintManager.setDecompressionTime(stopWatch.ElapsedMilliseconds,"texture");
 
         yield return null;
     }
