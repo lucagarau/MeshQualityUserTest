@@ -61,11 +61,7 @@ public class DracoMeshManager : MonoBehaviour
             Instances = new List<DracoMeshManager>();
         }
 
-        GetComponent<ObjectManipulator>().selectEntered.AddListener((t0) =>
-        {
-            SetInstance(this);
-        });
-        SetInstance(this);
+        
         // resizeObject();
     }
 
@@ -143,7 +139,7 @@ public class DracoMeshManager : MonoBehaviour
                 // Ridimensionamento dell'oggetto
                 resizeObject();
                 // Rotazione dell'oggetto
-                //rotateObject();
+                rotateObject();
             }
             stopwatch.Stop();
             DecompressionTime = stopwatch.ElapsedMilliseconds;
@@ -154,6 +150,8 @@ public class DracoMeshManager : MonoBehaviour
             RotateUV();
 
             Debug.Log("Decompressione completata con successo");
+            this.gameObject.GetComponent<MovementScripts>().meshReady = true;
+
         }
         else
         {
@@ -313,6 +311,7 @@ public class DracoMeshManager : MonoBehaviour
         renderer.material.mainTexture = texture;
         stopWatch.Stop();
         Debug.Log("Decompressione completata con successo in " + stopWatch.ElapsedMilliseconds + "ms");
+        this.gameObject.GetComponent<MovementScripts>().textureReady = true;
 
         yield return null;
     }
