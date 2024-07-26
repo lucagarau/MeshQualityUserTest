@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = System.Random;
 
 public class MovementScripts : MonoBehaviour
 {
@@ -23,6 +24,8 @@ public class MovementScripts : MonoBehaviour
     
     private State currentState = State.Idle;
     private float rotationProgress = 0f;
+    
+    private Random Randomizer = new Random();
 
     void Start()
     {
@@ -78,14 +81,6 @@ public class MovementScripts : MonoBehaviour
                     RotateTowards(initialRotation, State.Idle);
                     
                     break;
-                case State.Idle:
-                    
-                        Debug.Log("Checkpoint: " + currentCheckpointIndex + " - Fine percorso raggiunta!");
-                        pannelloAvanti.SetActive(true);
-                        currentCheckpointIndex = 0;
-                    
-
-                    break;
             }
         }
         else
@@ -137,7 +132,7 @@ public class MovementScripts : MonoBehaviour
             currentState = nextState;
             if (nextState == State.Idle)
             {
-                currentCheckpointIndex++;
+                /*currentCheckpointIndex++;
                 if (currentCheckpointIndex < checkpoints.Count)
                 {
                     target = checkpoints[currentCheckpointIndex].transform;
@@ -149,7 +144,14 @@ public class MovementScripts : MonoBehaviour
                     transform.rotation = originalTransform.rotation;
                     currentCheckpointIndex = 0;
                     target = checkpoints[currentCheckpointIndex].transform;
-                }
+                }*/
+                
+                currentCheckpointIndex = Randomizer.Next(0, checkpoints.Count);
+                target = checkpoints[currentCheckpointIndex].transform;
+                transform.position = originalTransform.position;
+                transform.rotation = originalTransform.rotation;
+                pannelloAvanti.SetActive(true);
+
                 
             }
         }
