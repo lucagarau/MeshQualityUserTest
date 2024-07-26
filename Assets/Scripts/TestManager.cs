@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using Random = System.Random;
 
 
 public class MeshData
@@ -12,7 +13,7 @@ public class MeshData
 public class TestManager : MonoBehaviour
 {
     public GameObject objectToMove;
-    private DracoMeshManager testObject;
+    private DracoMeshManager _dracoMeshManager;
     private MovementScripts movementScript;
     
     private int _meshIndex = -1;
@@ -21,11 +22,13 @@ public class TestManager : MonoBehaviour
     public string port = "8080";
     private string _url;
     private string _meshPath;
+    
+    private Random indexGenerator = new Random();
     private void Start()
     {
         if (objectToMove != null)
         {
-            testObject = objectToMove.GetComponent<DracoMeshManager>();
+            _dracoMeshManager = objectToMove.GetComponentInChildren<DracoMeshManager>();
             movementScript = objectToMove.GetComponent<MovementScripts>();
         }
         _url = "http://" + ip + ":" + port + "/";
@@ -90,7 +93,7 @@ public class TestManager : MonoBehaviour
         movementScript.textureReady = false;
         
         
-        _meshIndex++;
+        _meshIndex = indexGenerator.Next(0,models.Count);
         if (_meshIndex >= models.Count)
         {
             Debug.Log("Fine lista");
@@ -106,13 +109,13 @@ public class TestManager : MonoBehaviour
     private void changeMesh(string mesh)
     {
         Debug.Log("Cambio la mesh corrente con: " + mesh);
-        testObject.ChangeMesh(mesh);
+        _dracoMeshManager.ChangeMesh(mesh);
     }
     
     private void changeTexture(string texture)
     {
         Debug.Log("Cambio la texture corrente con: " + texture);
-        testObject.ChangeTexture(texture);
+        _dracoMeshManager.ChangeTexture(texture);
     }
     
 }

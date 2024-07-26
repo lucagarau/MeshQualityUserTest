@@ -16,6 +16,8 @@ public class DracoMeshManager : MonoBehaviour
     [SerializeField] private bool isStatic = false;
     [SerializeField] private Mesh placeholderMesh = null;
     [SerializeField] private string meshPath = null;
+    
+    public MovementScripts movementScripts;
 
     // Metadati della mesh
     private string Name { set; get; }
@@ -59,6 +61,15 @@ public class DracoMeshManager : MonoBehaviour
         if (Instances == null)
         {
             Instances = new List<DracoMeshManager>();
+        }
+
+        if (movementScripts == null)
+        {
+            movementScripts = GetComponent<MovementScripts>();
+            if (movementScripts == null)
+            {
+                movementScripts = GetComponentInParent<MovementScripts>();
+            }
         }
 
         
@@ -140,6 +151,8 @@ public class DracoMeshManager : MonoBehaviour
                 resizeObject();
                 // Rotazione dell'oggetto
                 rotateObject();
+                //centro l'oggetto nel bb
+                CenterMesh();
             }
             stopwatch.Stop();
             DecompressionTime = stopwatch.ElapsedMilliseconds;
@@ -150,7 +163,7 @@ public class DracoMeshManager : MonoBehaviour
             RotateUV();
 
             Debug.Log("Decompressione completata con successo");
-            this.gameObject.GetComponent<MovementScripts>().meshReady = true;
+            movementScripts.meshReady = true;
 
         }
         else
@@ -180,6 +193,30 @@ public class DracoMeshManager : MonoBehaviour
         var scaleFactor = normalizedBounds.size.magnitude / (bounds.size.magnitude);
         transform.localScale = Vector3.one * scaleFactor;
         normalizedScale = transform.localScale;
+        
+    }
+    
+    private void CenterMesh()
+    {
+        MeshFilter meshFilter = GetComponent<MeshFilter>();
+        if (meshFilter == null || meshFilter.mesh == null)
+        {
+            Debug.LogWarning("No mesh found on the MeshFilter.");
+            return;
+        }
+
+        // Calcola il centro del bounding box della mesh
+        Bounds bounds = meshFilter.mesh.bounds;
+        Vector3 center = bounds.center;
+
+        // Sposta i vertici della mesh
+        Vector3[] vertices = meshFilter.mesh.vertices;
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            vertices[i] -= center;
+        }
+        meshFilter.mesh.vertices = vertices;
+        meshFilter.mesh.RecalculateBounds();
         
     }
 
@@ -311,7 +348,7 @@ public class DracoMeshManager : MonoBehaviour
         renderer.material.mainTexture = texture;
         stopWatch.Stop();
         Debug.Log("Decompressione completata con successo in " + stopWatch.ElapsedMilliseconds + "ms");
-        this.gameObject.GetComponent<MovementScripts>().textureReady = true;
+        movementScripts.textureReady = true;
 
         yield return null;
     }

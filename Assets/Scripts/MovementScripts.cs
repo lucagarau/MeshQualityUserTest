@@ -1,40 +1,39 @@
-
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class MovementScripts : MonoBehaviour
 {
-     // Velocità di movimento e rotazione del GameObject
     public float moveSpeed = 5f;
     public float rotationSpeed = 100f;
     public GameObject pannelloAvanti;
     
     public bool meshReady = false, textureReady = false;
     
-    // Posizione e rotazione di destinazione (checkpoint B)
     private Transform target;
     private Transform originalTransform;
     private Quaternion initialRotation;
     
-    private Quaternion targetRotation;
-    private Quaternion oppositeRotation;
-    
     private Renderer _renderer;
 
-    // Enum per definire lo stato dell'azione
-    private enum State { Moving, RotatingToTarget, RotatingToOpposite, RotatingToInitial, Idle }
+    private enum State { Moving, RotatingClockwise, RotatingCounterclockwise, RotatingToInitial, Idle }
+
+    public List<GameObject> checkpoints = new List<GameObject>();
+    private int currentCheckpointIndex = 0;
+    
     private State currentState = State.Idle;
+    private float rotationProgress = 0f;
 
     void Start()
     {
-        // Trova l'oggetto "checkpoint B" e assegna la sua trasformazione come destinazione
         GameObject checkpointB = GameObject.Find("CheckpointB");
-        this.transform.rotation = Quaternion.Euler(0, 180, 0);
+        GameObject checkpointC = GameObject.Find("CheckpointC");
+        GameObject checkpointD = GameObject.Find("CheckpointD");
+        
+        
         if (checkpointB != null)
         {
             target = checkpointB.transform;
-            targetRotation = target.rotation;
-            oppositeRotation = Quaternion.Inverse(targetRotation) * Quaternion.Euler(180, 0, 180);
             initialRotation = transform.rotation;
         }
         else
@@ -54,27 +53,38 @@ public class MovementScripts : MonoBehaviour
             Debug.LogError("Checkpoint A non trovato. Assicurati che l'oggetto esista nella scena e sia chiamato 'checkpoint A'.");
         }
         
-        _renderer = GetComponent<Renderer>();
+        _renderer = GetComponentInChildren<Renderer>();
     }
 
     void Update()
     {
         if (meshReady && textureReady)
         {
+            
             _renderer.enabled = true;
             switch (currentState)
+            
             {
                 case State.Moving:
-                    MoveTowards(target.position, State.RotatingToTarget);
+                    MoveTowards(target.position, State.RotatingClockwise);
                     break;
-                case State.RotatingToTarget:
-                    RotateTowards(targetRotation, State.RotatingToOpposite);
+                case State.RotatingClockwise:
+                    RotateIncrementally(360f, State.RotatingCounterclockwise, true);
                     break;
-                case State.RotatingToOpposite:
-                    RotateTowards(oppositeRotation, State.RotatingToInitial);
+                case State.RotatingCounterclockwise:
+                    RotateIncrementally(360f, State.RotatingToInitial, false);
                     break;
                 case State.RotatingToInitial:
                     RotateTowards(initialRotation, State.Idle);
+                    
+                    break;
+                case State.Idle:
+                    
+                        Debug.Log("Checkpoint: " + currentCheckpointIndex + " - Fine percorso raggiunta!");
+                        pannelloAvanti.SetActive(true);
+                        currentCheckpointIndex = 0;
+                    
+
                     break;
             }
         }
@@ -93,6 +103,28 @@ public class MovementScripts : MonoBehaviour
         {
             currentState = nextState;
         }
+        
+        
+    }
+
+    private void RotateIncrementally(float totalDegrees, State nextState, bool clockwise)
+    {
+        float step = rotationSpeed * Time.deltaTime;
+        float rotationStep = clockwise ? step : -step;
+        transform.Rotate(0, rotationStep, 0);
+        rotationProgress += Mathf.Abs(rotationStep);
+
+        if (rotationProgress >= totalDegrees)
+        {
+            rotationProgress = 0f;
+            currentState = nextState;
+            if (nextState == State.Idle)
+            {
+                transform.position = originalTransform.position;
+                transform.rotation = originalTransform.rotation;
+                
+            }
+        }
     }
 
     private void RotateTowards(Quaternion targetRotation, State nextState)
@@ -103,25 +135,28 @@ public class MovementScripts : MonoBehaviour
         if (Quaternion.Angle(transform.rotation, targetRotation) < 0.1f)
         {
             currentState = nextState;
-            Debug.Log($"Rotazione completata dello stato: {currentState}!");
             if (nextState == State.Idle)
             {
-                Debug.Log($"Rotazione completata dello stato: {currentState}!");
-                
-                transform.position = originalTransform.position;
-                transform.rotation = originalTransform.rotation;
-                
-                pannelloAvanti.SetActive(true);
+                currentCheckpointIndex++;
+                if (currentCheckpointIndex < checkpoints.Count)
+                {
+                    target = checkpoints[currentCheckpointIndex].transform;
+                    currentState = State.Moving;
+                }
+                else
+                {
+                    transform.position = originalTransform.position;
+                    transform.rotation = originalTransform.rotation;
+                    currentCheckpointIndex = 0;
+                    target = checkpoints[currentCheckpointIndex].transform;
+                }
                 
             }
         }
     }
 
-    // Funzione pubblica per avviare il movimento
     public void StartMoving()
     {
         currentState = State.Moving;
     }
-    
-    
 }
