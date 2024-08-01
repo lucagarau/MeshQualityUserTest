@@ -182,9 +182,21 @@ public class DracoMeshManager : MonoBehaviour
     {
         var camera = Camera.main;
         var direction = camera.transform.position - transform.position;
-        var rotation = Quaternion.LookRotation(direction);
-        transform.rotation = rotation;
+    
+        // Elimina la componente y della direzione per evitare la rotazione lungo gli altri assi
+        direction.y = 0;
+
+        // Se la direzione è zero, mantieni la rotazione attuale
+        if (direction != Vector3.zero)
+        {
+            var rotation = Quaternion.LookRotation(direction);
+            transform.rotation = rotation;
+        }
+
+        // Mantieni l'oggetto rivolto verso l'alto
+        transform.up = Vector3.up;
     }
+
 
     private void resizeObject()
     {
