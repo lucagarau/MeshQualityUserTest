@@ -16,14 +16,20 @@ public class TestManager : MonoBehaviour
     private DracoMeshManager _dracoMeshManager;
     private MovementScripts movementScript;
     
-    private int _meshIndex = -1;
-    private List<MeshData> models = new List<MeshData>();
+    //private List<MeshData> models = new List<MeshData>();
     public string ip = "192.168.172.42";
     public string port = "8080";
     private string _url;
     private string _meshPath;
     
     private Random indexGenerator = new Random();
+    private Dictionary<String,List<MeshData>> _models = new Dictionary<string, List<MeshData>>();
+    private Dictionary<String,int> _categoryCounter = new Dictionary<string, int>();
+    private int _meshIndex = -1;
+
+    private List<String> _categories = new List<string>();
+    
+    private int _modelsForCategory = 3;
     private void Start()
     {
         if (objectToMove != null)
@@ -71,9 +77,25 @@ public class TestManager : MonoBehaviour
                 foreach (var line in lines)
                 {
                     string[] data = line.Split('|');
-                    models.Add(new MeshData { drc = data[0], texture = data[1] });
+                    var drc = data[0];
+                    var texture = data[1];
+                    var category = data[2];
+                    if (!_models.ContainsKey(category))
+                    {
+                        _models.Add(category, new List<MeshData>());
+                    }
+                    _models[category].Add(new MeshData {drc = drc, texture = texture});
                 }
-                Debug.Log("Lette " + models.Count + " mesh");
+                _categories.AddRange(_models.Keys);
+                foreach (var cat in _categories)
+                {
+                    _categoryCounter.Add(cat, _modelsForCategory);
+                }
+                
+                Debug.Log("Lista modelli aggiornata");
+                Debug.Log("Categorie disponibili: " + string.Join(", ", _categories));
+                Debug.Log("Modelli per categoria: " + _categoryCounter);
+                
             }
             catch (Exception e)
             {
@@ -92,18 +114,34 @@ public class TestManager : MonoBehaviour
         movementScript.meshReady = false;
         movementScript.textureReady = false;
         
-        
-        _meshIndex = indexGenerator.Next(0,models.Count);
-        if (_meshIndex >= models.Count)
+        //Se non ho categorie disponibili, esco
+        if(_categories.Count == 0)
         {
-            Debug.Log("Fine lista");
+            Debug.Log("Nessun modello disponibile");
+            return;
         }
-        var drc = models[_meshIndex].drc;
-        var texture = models[_meshIndex].texture;
+        
+        //genera casualmente una categoria tra quelle disponibili
+        string cat;
+        do
+        {
+            cat = _categories[indexGenerator.Next(0, _categories.Count)];
+        } while (_categoryCounter[cat] == 0);
+        
+        
+        //recupera un modello casuale dalla categoria scelta e lo carico in scena
+        _meshIndex = indexGenerator.Next(0, _models[cat].Count);
+        var drc = _models[cat][_meshIndex].drc;
+        var texture = _models[cat][_meshIndex].texture;
         StartCoroutine(Utilities.DownloadFile(drc, _url, _meshPath, changeMesh));
         StartCoroutine(Utilities.DownloadFile(texture, _url, _meshPath, changeTexture));
-        
         movementScript.StartMoving();
+        
+        //aggiorno il contatore della categoria, se arrivo a 0 rimuovo la categoria dalla lista
+        _categoryCounter[cat]--;
+        if(_categoryCounter[cat] == 0)
+            _categories.Remove(cat);
+        
     }
     
     private void changeMesh(string mesh)
