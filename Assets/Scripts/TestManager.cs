@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using Random = System.Random;
 
@@ -10,12 +11,35 @@ public class MeshData
     public string drc { get; set; }
     public string texture { get; set; }
 }
+
+public class Model : MonoBehaviour
+{
+    public string name = "";
+    public string category = "";
+    public string lod = "";
+    public string texture_resolution = "";
+    public int distance = 0;
+    public int quality = 0;
+
+    public  void PrintInformation()
+    {
+        Debug.Log( "Modello: " + name + " - Categoria: " + category + " - LOD: " + lod + " - Texture Resolution: " + texture_resolution + " - Distance: " + distance + " - Quality: " + quality);
+    }
+    
+    public void SubmitInformation(string url)
+    {
+        Debug.Log("Invio informazioni al server: " );
+        PrintInformation();
+        //send information to server
+    }
+}
 public class TestManager : MonoBehaviour
 {
     public GameObject objectToMove;
     private DracoMeshManager _dracoMeshManager;
     private MovementScripts movementScript;
-    
+
+    public static Model currentModel;
     //private List<MeshData> models = new List<MeshData>();
     public string ip = "192.168.172.42";
     public string port = "8080";
@@ -29,7 +53,8 @@ public class TestManager : MonoBehaviour
 
     private List<String> _categories = new List<string>();
     
-    private int _modelsForCategory = 3;
+    [SerializeField]
+    private int _modelsForCategory = 1;
     private void Start()
     {
         if (objectToMove != null)
@@ -110,6 +135,7 @@ public class TestManager : MonoBehaviour
     
     public void LoadNextMesh()
     {
+        TestManager.currentModel = new Model();
         //blocco il movimento e resetto le variabili di controllo del movimento
         movementScript.meshReady = false;
         movementScript.textureReady = false;
@@ -133,6 +159,17 @@ public class TestManager : MonoBehaviour
         _meshIndex = indexGenerator.Next(0, _models[cat].Count);
         var drc = _models[cat][_meshIndex].drc;
         var texture = _models[cat][_meshIndex].texture;
+        
+        //recupero i dati sul modello corrente: nome, categoria, lod, texture_resolution
+        var tmp = drc.Split("_");
+        currentModel.name = drc.Remove(drc.LastIndexOf("_") + 1);
+        var tmpLod = tmp[tmp.Length - 1].Split(".");
+        currentModel.lod = tmpLod[0];
+        currentModel.category = cat;
+        currentModel.texture_resolution = texture.Split("_")[0];
+        
+        //currentModel.PrintInformation();
+        
         StartCoroutine(Utilities.DownloadFile(drc, _url, _meshPath, changeMesh));
         StartCoroutine(Utilities.DownloadFile(texture, _url, _meshPath, changeTexture));
         movementScript.StartMoving();
@@ -146,14 +183,32 @@ public class TestManager : MonoBehaviour
     
     private void changeMesh(string mesh)
     {
-        Debug.Log("Cambio la mesh corrente con: " + mesh);
+//        Debug.Log("Cambio la mesh corrente con: " + mesh);
         _dracoMeshManager.ChangeMesh(mesh);
     }
     
     private void changeTexture(string texture)
     {
-        Debug.Log("Cambio la texture corrente con: " + texture);
+        //Debug.Log("Cambio la texture corrente con: " + texture);
         _dracoMeshManager.ChangeTexture(texture);
     }
+    
+    public void SubmitModelInformation(int quality)
+    {
+        currentModel.quality = quality;
+        currentModel.SubmitInformation(_url);
+    }
+    
+    public  void dubugPoho(string poho)
+    {
+        Debug.Log(poho);
+    }
+    
+    public void submitResult()
+    {
+        StartCoroutine( Utilities.SendResults(_url));
+
+    }
+
     
 }

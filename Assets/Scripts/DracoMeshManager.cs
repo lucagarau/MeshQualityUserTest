@@ -150,7 +150,7 @@ public class DracoMeshManager : MonoBehaviour
                 // Ridimensionamento dell'oggetto
                 resizeObject();
                 // Rotazione dell'oggetto
-                rotateObject();
+                //rotateObject();
                 //centro l'oggetto nel bb
                 CenterMesh();
             }
@@ -321,7 +321,7 @@ public class DracoMeshManager : MonoBehaviour
     
     public void ChangeMesh(string path)
     {
-        Debug.Log("Cambio la mesh con " + path);
+        //Debug.Log("Cambio la mesh con " + path);
         StartCoroutine(ChangeMeshCoroutine(path));
     }
     public void ChangeTexture(string path)
@@ -340,7 +340,7 @@ public class DracoMeshManager : MonoBehaviour
             Utilities.ConvertHeicToPng(path, newPath);
             path = newPath;
         }*/
-        Debug.Log("Cambio la texture con " + path);
+        //Debug.Log("Cambio la texture con " + path);
         var fullPath = Path.Combine(Application.temporaryCachePath, path);
 
         // Lettura asincrona del file per evitare blocchi nel thread principale
@@ -359,7 +359,7 @@ public class DracoMeshManager : MonoBehaviour
         texture.Apply();
         renderer.material.mainTexture = texture;
         stopWatch.Stop();
-        Debug.Log("Decompressione completata con successo in " + stopWatch.ElapsedMilliseconds + "ms");
+        //Debug.Log("Decompressione completata con successo in " + stopWatch.ElapsedMilliseconds + "ms");
         movementScripts.textureReady = true;
 
         yield return null;

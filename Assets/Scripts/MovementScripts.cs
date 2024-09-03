@@ -5,8 +5,8 @@ using Random = System.Random;
 
 public class MovementScripts : MonoBehaviour
 {
-    public float moveSpeed = 5f;
-    public float rotationSpeed = 100f;
+    public float moveSpeed = 2f;
+    public float rotationSpeed = 50f;
     public GameObject pannelloAvanti;
     
     public bool meshReady = false, textureReady = false;

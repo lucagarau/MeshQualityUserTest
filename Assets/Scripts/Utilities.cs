@@ -61,7 +61,31 @@ public class Utilities : MonoBehaviour
 
         // Esegui il callback per ulteriori azioni
         callback?.Invoke(file);
-    } 
+    }
+
+    public static IEnumerator SendResults(string url)
+    {
+        //serialize the data
+        string json = JsonUtility.ToJson(TestManager.currentModel);
+        
+        //create a POST request
+        UnityWebRequest request = new UnityWebRequest(url, "POST");
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
+        request.uploadHandler = (UploadHandler) new UploadHandlerRaw(bodyRaw);
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.downloadHandler = (DownloadHandler) new DownloadHandlerBuffer();
+        
+        //send the request
+        yield return request.SendWebRequest();
+        
+        //check for errors
+        if (request.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError("Error: " + request.error);
+        }
+        
+        
+    }
     
 
     // Metodo per gestire errori di download
@@ -79,9 +103,8 @@ public class Utilities : MonoBehaviour
         if(!Directory.Exists(folder))
             Directory.CreateDirectory(folder);
         File.WriteAllBytes(filePath, data);
-        Debug.Log(filePath);
+        //Debug.Log(filePath);
     }
-    
     
     
     public static Material LoadMTL(string path)
@@ -131,4 +154,8 @@ public class Utilities : MonoBehaviour
 
         return material;
     }
+    
+    
+
+    
 }
