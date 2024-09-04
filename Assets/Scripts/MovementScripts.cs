@@ -132,21 +132,11 @@ public class MovementScripts : MonoBehaviour
             currentState = nextState;
             if (nextState == State.Idle)
             {
-                /*currentCheckpointIndex++;
-                if (currentCheckpointIndex < checkpoints.Count)
-                {
-                    target = checkpoints[currentCheckpointIndex].transform;
-                    currentState = State.Moving;
-                }
-                else
-                {
-                    transform.position = originalTransform.position;
-                    transform.rotation = originalTransform.rotation;
-                    currentCheckpointIndex = 0;
-                    target = checkpoints[currentCheckpointIndex].transform;
-                }*/
                 
                 currentCheckpointIndex = Randomizer.Next(0, checkpoints.Count);
+                
+                TestManager.currentModel.distance = currentCheckpointIndex;
+                
                 target = checkpoints[currentCheckpointIndex].transform;
                 transform.position = originalTransform.position;
                 transform.rotation = originalTransform.rotation;

@@ -99,7 +99,6 @@ public class DracoMeshManager : MonoBehaviour
 
     private IEnumerator ChangeMeshCoroutine(string path)
     {
-        Debug.Log("inzio decompressione di " + path);
         var stopwatch = new System.Diagnostics.Stopwatch();
         stopwatch.Start();
         var fullPath = Path.Combine(Application.temporaryCachePath, path);

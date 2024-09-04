@@ -12,11 +12,11 @@ public class MeshData
     public string texture { get; set; }
 }
 
-public class Model : MonoBehaviour
+public class Model
 {
     public string name = "";
     public string category = "";
-    public string lod = "";
+    public int lod = 0;
     public string texture_resolution = "";
     public int distance = 0;
     public int quality = 0;
@@ -26,12 +26,7 @@ public class Model : MonoBehaviour
         Debug.Log( "Modello: " + name + " - Categoria: " + category + " - LOD: " + lod + " - Texture Resolution: " + texture_resolution + " - Distance: " + distance + " - Quality: " + quality);
     }
     
-    public void SubmitInformation(string url)
-    {
-        Debug.Log("Invio informazioni al server: " );
-        PrintInformation();
-        //send information to server
-    }
+    
 }
 public class TestManager : MonoBehaviour
 {
@@ -161,12 +156,39 @@ public class TestManager : MonoBehaviour
         var texture = _models[cat][_meshIndex].texture;
         
         //recupero i dati sul modello corrente: nome, categoria, lod, texture_resolution
-        var tmp = drc.Split("_");
+        /*var tmp = drc.Split("_");
         currentModel.name = drc.Remove(drc.LastIndexOf("_") + 1);
         var tmpLod = tmp[tmp.Length - 1].Split(".");
         currentModel.lod = tmpLod[0];
         currentModel.category = cat;
-        currentModel.texture_resolution = texture.Split("_")[0];
+        currentModel.texture_resolution = texture.Split("_")[0];*/
+        
+        
+        //cambia separatore in base al sistema operativo
+        var separator = Path.DirectorySeparatorChar;
+        
+        var drcSplitted = drc.Split("_");
+        var LODTmp = ((drcSplitted[drcSplitted.Length - 1].Split("."))[0]).Split("/");
+        var textureTmp = texture.Split(separator);
+        textureTmp = textureTmp[textureTmp.Length - 1].Split("_");
+        currentModel.texture_resolution = textureTmp[0] + " x " + textureTmp[0];
+        currentModel.name = drc.Remove(drc.LastIndexOf("_") + 1);
+        switch (LODTmp[LODTmp.Length - 1])
+        {
+            case "LOD1":
+                currentModel.lod = 1;
+                break;
+            case "LOD2":
+                currentModel.lod = 2;
+                break;
+            default:
+                currentModel.lod = 0;
+                break;
+        }
+
+        
+        currentModel.category = cat;
+        
         
         //currentModel.PrintInformation();
         
@@ -193,10 +215,9 @@ public class TestManager : MonoBehaviour
         _dracoMeshManager.ChangeTexture(texture);
     }
     
-    public void SubmitModelInformation(int quality)
+    public void SetResultQuality(int quality)
     {
         currentModel.quality = quality;
-        currentModel.SubmitInformation(_url);
     }
     
     public  void dubugPoho(string poho)
