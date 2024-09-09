@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = System.Random;
 
 
@@ -19,7 +21,7 @@ public class Model
     public int lod = 0;
     public string texture_resolution = "";
     public int distance = 0;
-    public int quality = 0;
+    public int quality = -1 ;
 
     public  void PrintInformation()
     {
@@ -31,6 +33,8 @@ public class Model
 public class TestManager : MonoBehaviour
 {
     public GameObject objectToMove;
+    [FormerlySerializedAs("_avantiPanel")] [SerializeField] private GameObject avantiPanel;
+    [FormerlySerializedAs("_oto")] [SerializeField] private TextMeshProUGUI voto;
     private DracoMeshManager _dracoMeshManager;
     private MovementScripts movementScript;
 
@@ -57,6 +61,9 @@ public class TestManager : MonoBehaviour
             _dracoMeshManager = objectToMove.GetComponentInChildren<DracoMeshManager>();
             movementScript = objectToMove.GetComponent<MovementScripts>();
         }
+        
+        if (avantiPanel == null)
+            return;
         _url = "http://" + ip + ":" + port + "/";
         
         // Pulisce la cache locale
@@ -169,9 +176,11 @@ public class TestManager : MonoBehaviour
         
         var drcSplitted = drc.Split("_");
         var LODTmp = ((drcSplitted[drcSplitted.Length - 1].Split("."))[0]).Split("/");
-        var textureTmp = texture.Split(separator);
-        textureTmp = textureTmp[textureTmp.Length - 1].Split("_");
-        currentModel.texture_resolution = textureTmp[0] + " x " + textureTmp[0];
+        
+        var textureSplitted = texture.Split(separator);
+        var textureTmp = textureSplitted[textureSplitted.Length - 1].Split("_");
+        currentModel.texture_resolution = textureTmp[0];
+        
         currentModel.name = drc.Remove(drc.LastIndexOf("_") + 1);
         switch (LODTmp[LODTmp.Length - 1])
         {
@@ -218,6 +227,7 @@ public class TestManager : MonoBehaviour
     public void SetResultQuality(int quality)
     {
         currentModel.quality = quality;
+        voto.text = "Valutazione: " + quality.ToString();
     }
     
     public  void dubugPoho(string poho)
@@ -227,7 +237,15 @@ public class TestManager : MonoBehaviour
     
     public void submitResult()
     {
+        if(currentModel.quality == -1)
+        {
+            Debug.Log("Valutazione non effettuata");
+            return;
+        }
         StartCoroutine( Utilities.SendResults(_url));
+        voto.text = "Valutazione: Da Inserire";
+        avantiPanel.SetActive(false);
+        LoadNextMesh();
 
     }
 
