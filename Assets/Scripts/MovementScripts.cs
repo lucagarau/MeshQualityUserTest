@@ -28,6 +28,21 @@ public class MovementScripts : MonoBehaviour
     void Start()
     {
         _renderer = GetComponentInChildren<Renderer>();
+        
+        var checkpointA = GameObject.Find("CheckpointA");
+        if (checkpointA != null)
+        {
+            transform.position = checkpointA.transform.position;
+            transform.rotation = checkpointA.transform.rotation;
+            originalTransform = checkpointA.transform;
+            initialRotation = checkpointA.transform.rotation;
+        }
+        else
+        {
+            Debug.LogError("Checkpoint A non trovato. Assicurati che l'oggetto esista nella scena e sia chiamato 'checkpoint A'.");
+        }
+
+
     }
 
     void Update()
@@ -49,6 +64,7 @@ public class MovementScripts : MonoBehaviour
                     RotateIncrementally(360f, State.RotatingToInitial, false);
                     break;
                 case State.RotatingToInitial:
+                    Debug.Log("Rotating to initial");
                     RotateTowards(initialRotation, State.Idle);
                     
                     break;
@@ -103,7 +119,7 @@ public class MovementScripts : MonoBehaviour
             currentState = nextState;
             if (nextState == State.Idle)
             {
-                
+                Debug.Log("Fede Puzza");
                 transform.position = originalTransform.position;
                 transform.rotation = originalTransform.rotation;
                 pannelloAvanti.SetActive(true);

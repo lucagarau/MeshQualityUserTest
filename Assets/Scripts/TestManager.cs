@@ -94,7 +94,7 @@ public class TestManager : MonoBehaviour
 
     private void updateList()
     {
-        StartCoroutine(Utilities.DownloadFile("mesh_list.txt", _url, _meshPath, readMeshList));
+        StartCoroutine(Utilities.DownloadFile("mesh_list.csv", _url, _meshPath, readMeshList));
     }
     
     // Metodo per pulire la cache locale
@@ -152,6 +152,7 @@ public class TestManager : MonoBehaviour
     
     public void LoadNextMesh()
     {
+        
         TestManager.currentModel = new Model();
         //blocco il movimento e resetto le variabili di controllo del movimento
         movementScript.meshReady = false;
