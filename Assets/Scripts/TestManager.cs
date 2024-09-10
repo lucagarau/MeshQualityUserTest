@@ -26,6 +26,8 @@ public class MeshData
 
 public class Model
 {
+    public string type = "valutazione";
+    public string id;
     public string name = "";
     public string category = "";
     public int lod = 0;
@@ -51,17 +53,23 @@ public class TestManager : MonoBehaviour
     public static Model currentModel;
     
     private List<MeshData> modelsList = new List<MeshData>();
-    public int meshIndex;
+    
+    public int meshIndex = -1;
+    public string csvName;
+    
+    public static string ID = "";
     
     public string ip = "192.168.172.42";
     public string port = "8080";
     private string _url;
     private string _meshPath;
     
+    
+    
     [SerializeField] private bool keepCache = false;
     
     
-    private void Start()
+    public void StartTest()
     {
         //check components principali
         if (objectToMove != null)
@@ -89,13 +97,21 @@ public class TestManager : MonoBehaviour
             ClearCache();
         
         //carica la lista dei modelli disponibili
-        updateList();
+        getCsv();
     }
 
-    private void updateList()
+    private void getCsv()
     {
-        StartCoroutine(Utilities.DownloadFile("mesh_list.csv", _url, _meshPath, readMeshList));
+        StartCoroutine(Utilities.RequestCsv( _url, _meshPath, this, UpadateList));
     }
+
+    private void UpadateList(string nullString = null)
+    {
+        var csvPath = "tests\\" + csvName;
+        StartCoroutine(Utilities.DownloadFile(csvName, _url, _meshPath, readMeshList));
+    }
+    
+    
     
     // Metodo per pulire la cache locale
     void ClearCache()
@@ -117,7 +133,7 @@ public class TestManager : MonoBehaviour
      * Metodo per leggere la lista dei modelli disponibili nel server
      * @param path: percorso del file da leggere
      */
-    private void readMeshList(string path)
+    public void readMeshList(string path)
     {
         path = _meshPath + path;
         if (File.Exists(path))
@@ -136,8 +152,7 @@ public class TestManager : MonoBehaviour
 
                 }
                 
-                //todo: da cambiare con la richiesta al server dell'ultimo modello valutato
-                meshIndex = 0; //indice del modello corrente
+                if (meshIndex == -1) meshIndex = 0;
             }
             catch (Exception e)
             {
@@ -160,7 +175,7 @@ public class TestManager : MonoBehaviour
         
         //todo: creare un pannello di fine test
         //Se non ho modello disponibile, esco
-        if(modelsList.Count == 0)
+        if(meshIndex >= modelsList.Count)
         {
             Debug.Log("Nessun modello disponibile, fine test");
             return;
@@ -199,6 +214,7 @@ public class TestManager : MonoBehaviour
         
         currentModel.category = modelsList[meshIndex].category;
         currentModel.distance = modelsList[meshIndex].distance;
+        currentModel.id = ID;
         
         //scarico il modello e la texture dal server e li carico nella scena
         StartCoroutine(Utilities.DownloadFile(drc, _url, _meshPath, changeMesh));

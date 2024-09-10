@@ -119,7 +119,6 @@ public class MovementScripts : MonoBehaviour
             currentState = nextState;
             if (nextState == State.Idle)
             {
-                Debug.Log("Fede Puzza");
                 transform.position = originalTransform.position;
                 transform.rotation = originalTransform.rotation;
                 pannelloAvanti.SetActive(true);

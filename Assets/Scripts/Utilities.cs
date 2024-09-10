@@ -2,12 +2,26 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
 
 public class Utilities : MonoBehaviour
 {
     private static float _lastDownloadTime;
+    
+    class DownloadData
+    {
+        public string type = "csv";
+        public string id;
+    }
+    
+    [System.Serializable]
+    public class ServerResponse
+    {
+        public string csv_name;
+        public int index;
+    }
     
     public static IEnumerator DownloadFile(string file, string url, string internalPath, Action<string> callback = null, string another = null)
     {
@@ -63,6 +77,46 @@ public class Utilities : MonoBehaviour
         callback?.Invoke(file);
     }
 
+    public static IEnumerator RequestCsv(string url, string internalPath, TestManager instance,Action<string> callback)
+    {
+        //serialize the data
+        var data = new DownloadData();
+        data.id = TestManager.ID;
+        string json = JsonUtility.ToJson(data);
+
+        //create a POST request
+        UnityWebRequest request = new UnityWebRequest(url, "POST");
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
+        request.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyRaw);
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
+
+        //send the request
+        yield return request.SendWebRequest();
+
+        //check for errors
+        if (request.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError("Error: " + request.error);
+        }
+        else
+        {
+            // Leggi la risposta JSON
+            string jsonResponse = request.downloadHandler.text;
+            Debug.Log("Response: " + jsonResponse);
+
+            // Deserializza la risposta
+            ServerResponse response = JsonUtility.FromJson<ServerResponse>(jsonResponse);
+            Debug.Log("CSV: " + response.csv_name);
+            Debug.Log("Index: " + response.index);
+
+            instance.csvName = response.csv_name;
+            instance.meshIndex = response.index;
+            
+            callback?.Invoke(null);
+        }
+    }
+
     public static IEnumerator SendResults(string url)
     {
         //serialize the data
@@ -83,8 +137,6 @@ public class Utilities : MonoBehaviour
         {
             Debug.LogError("Error: " + request.error);
         }
-        
-        
     }
     
 
