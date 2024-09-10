@@ -3326,6 +3326,8 @@ MonoBehaviour:
   meshReady: 0
   textureReady: 0
   checkpoints:
+  - {fileID: 1747462492}
+  - {fileID: 886205481}
   - {fileID: 1112510836}
 --- !u!4 &1292959743
 Transform:
@@ -4887,9 +4889,10 @@ MonoBehaviour:
   objectToMove: {fileID: 1292959741}
   avantiPanel: {fileID: 437134213}
   voto: {fileID: 217141198}
+  meshIndex: 0
   ip: localhost
   port: 8080
-  _modelsForCategory: 1
+  keepCache: 0
 --- !u!4 &2032570217
 Transform:
   m_ObjectHideFlags: 0

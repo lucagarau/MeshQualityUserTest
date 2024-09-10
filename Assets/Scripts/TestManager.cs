@@ -51,7 +51,7 @@ public class TestManager : MonoBehaviour
     public static Model currentModel;
     
     private List<MeshData> modelsList = new List<MeshData>();
-    private int _meshIndex;
+    public int meshIndex;
     
     public string ip = "192.168.172.42";
     public string port = "8080";
@@ -137,7 +137,7 @@ public class TestManager : MonoBehaviour
                 }
                 
                 //todo: da cambiare con la richiesta al server dell'ultimo modello valutato
-                _meshIndex = 0; //indice del modello corrente
+                meshIndex = 0; //indice del modello corrente
             }
             catch (Exception e)
             {
@@ -167,8 +167,8 @@ public class TestManager : MonoBehaviour
         }
         
         //recupera il prossimo modello da valutare
-        var drc = modelsList[_meshIndex].drcPath;
-        var texture = modelsList[_meshIndex].texturePath;
+        var drc = modelsList[meshIndex].drcPath;
+        var texture = modelsList[meshIndex].texturePath;
        
         
         
@@ -197,16 +197,16 @@ public class TestManager : MonoBehaviour
                 break;
         }
         
-        currentModel.category = modelsList[_meshIndex].category;
-        currentModel.distance = modelsList[_meshIndex].distance;
+        currentModel.category = modelsList[meshIndex].category;
+        currentModel.distance = modelsList[meshIndex].distance;
         
         //scarico il modello e la texture dal server e li carico nella scena
         StartCoroutine(Utilities.DownloadFile(drc, _url, _meshPath, changeMesh));
         StartCoroutine(Utilities.DownloadFile(texture, _url, _meshPath, changeTexture));
-        movementScript.StartMoving(modelsList[_meshIndex].distance);
+        movementScript.StartMoving(modelsList[meshIndex].distance);
         
         //aggiorno il contatore del modello corrente
-        _meshIndex++;
+        meshIndex++;
         
     }
     
