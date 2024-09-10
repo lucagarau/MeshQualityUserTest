@@ -20,42 +20,13 @@ public class MovementScripts : MonoBehaviour
     private enum State { Moving, RotatingClockwise, RotatingCounterclockwise, RotatingToInitial, Idle }
 
     public List<GameObject> checkpoints = new List<GameObject>();
-    private int currentCheckpointIndex = 0;
     
     private State currentState = State.Idle;
     private float rotationProgress = 0f;
     
-    private Random Randomizer = new Random();
 
     void Start()
     {
-        GameObject checkpointB = GameObject.Find("CheckpointB");
-        GameObject checkpointC = GameObject.Find("CheckpointC");
-        GameObject checkpointD = GameObject.Find("CheckpointD");
-        
-        
-        if (checkpointB != null)
-        {
-            target = checkpointB.transform;
-            initialRotation = transform.rotation;
-        }
-        else
-        {
-            Debug.LogError("Checkpoint B non trovato. Assicurati che l'oggetto esista nella scena e sia chiamato 'checkpoint B'.");
-        }
-        
-        var checkpointA = GameObject.Find("CheckpointA");
-        if (checkpointA != null)
-        {
-            transform.position = checkpointA.transform.position;
-            transform.rotation = checkpointA.transform.rotation;
-            originalTransform = checkpointA.transform;
-        }
-        else
-        {
-            Debug.LogError("Checkpoint A non trovato. Assicurati che l'oggetto esista nella scena e sia chiamato 'checkpoint A'.");
-        }
-        
         _renderer = GetComponentInChildren<Renderer>();
     }
 
@@ -133,11 +104,6 @@ public class MovementScripts : MonoBehaviour
             if (nextState == State.Idle)
             {
                 
-                currentCheckpointIndex = Randomizer.Next(0, checkpoints.Count);
-                
-                TestManager.currentModel.distance = currentCheckpointIndex;
-                
-                target = checkpoints[currentCheckpointIndex].transform;
                 transform.position = originalTransform.position;
                 transform.rotation = originalTransform.rotation;
                 pannelloAvanti.SetActive(true);
@@ -147,8 +113,19 @@ public class MovementScripts : MonoBehaviour
         }
     }
 
-    public void StartMoving()
+    public void StartMoving(int distance)
     {
+        //inizio il movimento
         currentState = State.Moving;
+        
+        //inposto il target, se la distanza è maggiore del numero di checkpoint disponibili, mando un errore e setto la distanza al checkpoint più vicino
+        if (distance >= checkpoints.Count)
+        {
+            Debug.LogError("Distance out of range");
+            distance = checkpoints.Count - 1;
+        }
+        target = checkpoints[distance].transform;
+
+        
     }
 }

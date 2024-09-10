@@ -10,8 +10,18 @@ using Random = System.Random;
 
 public class MeshData
 {
-    public string drc { get; set; }
-    public string texture { get; set; }
+    public string drcPath { get; set; }
+    public string texturePath { get; set; }
+    public int distance { get; set; }
+    public string category { get; set; }
+    
+    public MeshData(string category, string drcPath, string texturePath, int distance)
+    {
+        this.category = category;
+        this.drcPath = drcPath;
+        this.texturePath = texturePath;
+        this.distance = distance;
+    }
 }
 
 public class Model
@@ -39,36 +49,46 @@ public class TestManager : MonoBehaviour
     private MovementScripts movementScript;
 
     public static Model currentModel;
-    //private List<MeshData> models = new List<MeshData>();
+    
+    private List<MeshData> modelsList = new List<MeshData>();
+    private int _meshIndex;
+    
     public string ip = "192.168.172.42";
     public string port = "8080";
     private string _url;
     private string _meshPath;
     
-    private Random indexGenerator = new Random();
-    private Dictionary<String,List<MeshData>> _models = new Dictionary<string, List<MeshData>>();
-    private Dictionary<String,int> _categoryCounter = new Dictionary<string, int>();
-    private int _meshIndex = -1;
-
-    private List<String> _categories = new List<string>();
+    [SerializeField] private bool keepCache = false;
     
-    [SerializeField]
-    private int _modelsForCategory = 1;
+    
     private void Start()
     {
+        //check components principali
         if (objectToMove != null)
         {
             _dracoMeshManager = objectToMove.GetComponentInChildren<DracoMeshManager>();
             movementScript = objectToMove.GetComponent<MovementScripts>();
         }
+    
+        //inizializzo la lista dei modelli
+        modelsList = new List<MeshData>();
         
+        //Controllo se il pannello è stato assegnato, altrementi mando un errore
         if (avantiPanel == null)
+        {
+            Debug.LogError("Pannello non assegnato");
             return;
+        }
+
+        //Assegnamento url per la connessione al server
         _url = "http://" + ip + ":" + port + "/";
         
-        // Pulisce la cache locale
+        // Pulisce la cache locale se keepCache è false
         _meshPath = Application.temporaryCachePath + "/";
-        ClearCache();
+        if (!keepCache)
+            ClearCache();
+        
+        //carica la lista dei modelli disponibili
         updateList();
     }
 
@@ -93,6 +113,10 @@ public class TestManager : MonoBehaviour
         
     }
     
+    /**
+     * Metodo per leggere la lista dei modelli disponibili nel server
+     * @param path: percorso del file da leggere
+     */
     private void readMeshList(string path)
     {
         path = _meshPath + path;
@@ -100,29 +124,20 @@ public class TestManager : MonoBehaviour
         {
             try
             {
+                //leggo tutti i modelli disponibili
                 string[] lines = File.ReadAllLines(path);
                 foreach (var line in lines)
                 {
-                    string[] data = line.Split('|');
-                    var drc = data[0];
-                    var texture = data[1];
-                    var category = data[2];
-                    if (!_models.ContainsKey(category))
+                    string[] data = line.Split(';');
+                    if (data.Length == 4)
                     {
-                        _models.Add(category, new List<MeshData>());
+                        modelsList.Add(new MeshData(data[0], data[1], data[2], int.Parse(data[3])));
                     }
-                    _models[category].Add(new MeshData {drc = drc, texture = texture});
-                }
-                _categories.AddRange(_models.Keys);
-                foreach (var cat in _categories)
-                {
-                    _categoryCounter.Add(cat, _modelsForCategory);
+
                 }
                 
-                Debug.Log("Lista modelli aggiornata");
-                Debug.Log("Categorie disponibili: " + string.Join(", ", _categories));
-                Debug.Log("Modelli per categoria: " + _categoryCounter);
-                
+                //todo: da cambiare con la richiesta al server dell'ultimo modello valutato
+                _meshIndex = 0; //indice del modello corrente
             }
             catch (Exception e)
             {
@@ -142,38 +157,24 @@ public class TestManager : MonoBehaviour
         movementScript.meshReady = false;
         movementScript.textureReady = false;
         
-        //Se non ho categorie disponibili, esco
-        if(_categories.Count == 0)
+        //todo: creare un pannello di fine test
+        //Se non ho modello disponibile, esco
+        if(modelsList.Count == 0)
         {
-            Debug.Log("Nessun modello disponibile");
+            Debug.Log("Nessun modello disponibile, fine test");
             return;
         }
         
-        //genera casualmente una categoria tra quelle disponibili
-        string cat;
-        do
-        {
-            cat = _categories[indexGenerator.Next(0, _categories.Count)];
-        } while (_categoryCounter[cat] == 0);
-        
-        
-        //recupera un modello casuale dalla categoria scelta e lo carico in scena
-        _meshIndex = indexGenerator.Next(0, _models[cat].Count);
-        var drc = _models[cat][_meshIndex].drc;
-        var texture = _models[cat][_meshIndex].texture;
-        
-        //recupero i dati sul modello corrente: nome, categoria, lod, texture_resolution
-        /*var tmp = drc.Split("_");
-        currentModel.name = drc.Remove(drc.LastIndexOf("_") + 1);
-        var tmpLod = tmp[tmp.Length - 1].Split(".");
-        currentModel.lod = tmpLod[0];
-        currentModel.category = cat;
-        currentModel.texture_resolution = texture.Split("_")[0];*/
+        //recupera il prossimo modello da valutare
+        var drc = modelsList[_meshIndex].drcPath;
+        var texture = modelsList[_meshIndex].texturePath;
+       
         
         
         //cambia separatore in base al sistema operativo
         var separator = Path.DirectorySeparatorChar;
         
+        //aggiorno le informazioni del modello corrente da inviare al server dopo che l'utente ha valutato il modello
         var drcSplitted = drc.Split("_");
         var LODTmp = ((drcSplitted[drcSplitted.Length - 1].Split("."))[0]).Split("/");
         
@@ -194,21 +195,17 @@ public class TestManager : MonoBehaviour
                 currentModel.lod = 0;
                 break;
         }
-
         
-        currentModel.category = cat;
+        currentModel.category = modelsList[_meshIndex].category;
+        currentModel.distance = modelsList[_meshIndex].distance;
         
-        
-        //currentModel.PrintInformation();
-        
+        //scarico il modello e la texture dal server e li carico nella scena
         StartCoroutine(Utilities.DownloadFile(drc, _url, _meshPath, changeMesh));
         StartCoroutine(Utilities.DownloadFile(texture, _url, _meshPath, changeTexture));
-        movementScript.StartMoving();
+        movementScript.StartMoving(modelsList[_meshIndex].distance);
         
-        //aggiorno il contatore della categoria, se arrivo a 0 rimuovo la categoria dalla lista
-        _categoryCounter[cat]--;
-        if(_categoryCounter[cat] == 0)
-            _categories.Remove(cat);
+        //aggiorno il contatore del modello corrente
+        _meshIndex++;
         
     }
     
