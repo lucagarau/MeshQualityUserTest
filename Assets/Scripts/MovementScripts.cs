@@ -8,6 +8,9 @@ public class MovementScripts : MonoBehaviour
     public float moveSpeed = 2f;
     public float rotationSpeed = 50f;
     public GameObject pannelloAvanti;
+    [SerializeField] private GameObject pannelloCategoria;
+    private int _modelCount = 0;
+    public int _modelCountLimit = 20;
     
     public bool meshReady = false, textureReady = false;
     
@@ -121,7 +124,19 @@ public class MovementScripts : MonoBehaviour
             {
                 transform.position = originalTransform.position;
                 transform.rotation = originalTransform.rotation;
-                pannelloAvanti.SetActive(true);
+                
+                _modelCount++;
+                if (_modelCount >= _modelCountLimit)
+                {
+                    _modelCount = 0;
+                    pannelloCategoria.SetActive(true);
+                    pannelloAvanti.SetActive(false);
+                }
+                else
+                {
+                    pannelloCategoria.SetActive(false);
+                    pannelloAvanti.SetActive(true);
+                }
 
                 
             }

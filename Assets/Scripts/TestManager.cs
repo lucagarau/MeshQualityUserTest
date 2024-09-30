@@ -42,15 +42,37 @@ public class Model
     
     
 }
+
+public class CategoryAnswer
+{
+    public string type = "categoria";
+    public string id;
+    public string category;
+    public bool correct;
+    
+    public CategoryAnswer(string id, string category, bool correct)
+    {
+        this.id = id;
+        this.category = category;
+        this.correct = correct;
+    }
+}
 public class TestManager : MonoBehaviour
 {
     public GameObject objectToMove;
     [FormerlySerializedAs("_avantiPanel")] [SerializeField] private GameObject avantiPanel;
+    [FormerlySerializedAs("_avantiPanel")] [SerializeField] private GameObject categoryPanel;
+
     [FormerlySerializedAs("_oto")] [SerializeField] private TextMeshProUGUI voto;
+    
+    [SerializeField] private TextMeshProUGUI lableCategoria;
+    private string _categoriaInserita;
+    
     private DracoMeshManager _dracoMeshManager;
     private MovementScripts movementScript;
 
     public static Model currentModel;
+    public static CategoryAnswer CurrentCategoryAnswer;
     
     private List<MeshData> modelsList = new List<MeshData>();
     
@@ -64,6 +86,8 @@ public class TestManager : MonoBehaviour
     private string _url;
     private string _meshPath;
     
+   
+    
     
     
     [SerializeField] private bool keepCache = false;
@@ -71,6 +95,7 @@ public class TestManager : MonoBehaviour
     
     public void StartTest()
     {
+        CurrentCategoryAnswer = new CategoryAnswer(ID, "", false);
         //check components principali
         if (objectToMove != null)
         {
@@ -102,11 +127,13 @@ public class TestManager : MonoBehaviour
 
     private void getCsv()
     {
+        Debug.Log("Richiedo nome del file csv");
         StartCoroutine(Utilities.RequestCsv( _url, _meshPath, this, UpadateList));
     }
 
     private void UpadateList(string nullString = null)
     {
+        Debug.Log("Chiedo e scarico il csv");
         var csvPath = "tests\\" + csvName;
         StartCoroutine(Utilities.DownloadFile(csvName, _url, _meshPath, readMeshList));
     }
@@ -153,6 +180,7 @@ public class TestManager : MonoBehaviour
                 }
                 
                 if (meshIndex == -1) meshIndex = 0;
+                
             }
             catch (Exception e)
             {
@@ -167,7 +195,6 @@ public class TestManager : MonoBehaviour
     
     public void LoadNextMesh()
     {
-        
         TestManager.currentModel = new Model();
         //blocco il movimento e resetto le variabili di controllo del movimento
         movementScript.meshReady = false;
@@ -177,19 +204,18 @@ public class TestManager : MonoBehaviour
         //Se non ho modello disponibile, esco
         if(meshIndex >= modelsList.Count)
         {
-            Debug.Log("Nessun modello disponibile, fine test");
             return;
         }
         
         //recupera il prossimo modello da valutare
         var drc = modelsList[meshIndex].drcPath;
         var texture = modelsList[meshIndex].texturePath;
-       
-        
         
         //cambia separatore in base al sistema operativo
-        var separator = Path.DirectorySeparatorChar;
+        //var separator = Path.DirectorySeparatorChar;
+        var separator = "\\";
         
+        Debug.Log("separator: " + separator);
         //aggiorno le informazioni del modello corrente da inviare al server dopo che l'utente ha valutato il modello
         var drcSplitted = drc.Split("_");
         var LODTmp = ((drcSplitted[drcSplitted.Length - 1].Split("."))[0]).Split("/");
@@ -198,7 +224,7 @@ public class TestManager : MonoBehaviour
         var textureTmp = textureSplitted[textureSplitted.Length - 1].Split("_");
         currentModel.texture_resolution = textureTmp[0];
         
-        currentModel.name = drc.Remove(drc.LastIndexOf("_") + 1);
+        currentModel.name = drc.Split(separator)[1];
         switch (LODTmp[LODTmp.Length - 1])
         {
             case "LOD1":
@@ -216,6 +242,7 @@ public class TestManager : MonoBehaviour
         currentModel.distance = modelsList[meshIndex].distance;
         currentModel.id = ID;
         
+        Debug.Log("scarico i file");
         //scarico il modello e la texture dal server e li carico nella scena
         StartCoroutine(Utilities.DownloadFile(drc, _url, _meshPath, changeMesh));
         StartCoroutine(Utilities.DownloadFile(texture, _url, _meshPath, changeTexture));
@@ -244,11 +271,30 @@ public class TestManager : MonoBehaviour
         voto.text = "Valutazione: " + quality.ToString();
     }
     
-    public  void dubugPoho(string poho)
+    public void SetCategory(string category)
     {
-        Debug.Log(poho);
+        _categoriaInserita = category;
+        lableCategoria.text = "Categoria: " + category;
     }
     
+    public void SubmitCategory()
+    {
+        if (_categoriaInserita == null)
+        {
+            Debug.Log("Categoria non inserita");
+            return;
+        }
+        else
+        {
+                categoryPanel.SetActive(false);
+                avantiPanel.SetActive(true);
+               
+                CurrentCategoryAnswer.category = _categoriaInserita;
+                CurrentCategoryAnswer.correct = _categoriaInserita == currentModel.category;
+                StartCoroutine(Utilities.SendResultsCategory(_url));
+
+        }
+    }
     public void submitResult()
     {
         if(currentModel.quality == -1)

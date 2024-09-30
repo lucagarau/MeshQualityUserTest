@@ -138,6 +138,28 @@ public class Utilities : MonoBehaviour
             Debug.LogError("Error: " + request.error);
         }
     }
+    public static IEnumerator SendResultsCategory(string url)
+    {
+        //serialize the data
+        string json = JsonUtility.ToJson(TestManager.CurrentCategoryAnswer);
+        
+        //create a POST request
+        UnityWebRequest request = new UnityWebRequest(url, "POST");
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
+        request.uploadHandler = (UploadHandler) new UploadHandlerRaw(bodyRaw);
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.downloadHandler = (DownloadHandler) new DownloadHandlerBuffer();
+        
+        //send the request
+        yield return request.SendWebRequest();
+        
+        //check for errors
+        if (request.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError("Error: " + request.error);
+        }
+    }
+    
     
 
     // Metodo per gestire errori di download
